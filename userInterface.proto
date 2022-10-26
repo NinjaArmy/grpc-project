@@ -1,0 +1,191 @@
+/* This is where the magic happens 
+   Protocol Buffers are language and platfrom neutral
+   We define our service definitions and messages here.
+   This is written in IDL (Interface Definition Language) --> it's like an interface between the client and server
+
+*/
+syntax = "proto3";
+/* Import to use any types */
+import "google/protobuf/any.proto";
+
+/* Defining a UserInterface item accordingly to UserInterfaceDescription.kt 
+   There are not a lot of datatypes in proto
+*/
+message UserInterface {
+    string id = 1;
+    string appliance_id = 2;
+   
+    message Layout {
+        string id = 1;
+        /* Declaration in Layout.kt --> var applianceType: ApplianceType --> ApplianceType is not defined anywhere */
+        enum ApplianceType {
+            MANUFACTURER = 0;
+            MODEL = 1;
+        }
+        ApplianceType appliance_type = 2;
+        repeated View views = 3;
+    }
+  
+    message View {
+        string id = 0;
+        enum ViewType {
+            STANDBY = 0;
+            IDENTIFICATION = 1;
+            HOMESCREEN = 2;
+            ACTIVE_PROGRAM = 3;
+            LIBRARY = 4;
+            PROGRAM_SETTINGS = 5;
+        }
+        ViewType type = 2;
+        message LayoutContainer {
+            string id = 1;
+            string description = 2;
+            repeated Component components = 3;
+            int32 font_size = 4;
+        }
+        repeated LayoutContainer container = 3;
+    }
+
+    message Notifcation {
+        string id = 1;
+        /* Enumeration for notifcation type */
+        enum NotificationType {
+            DOOR_OPEN = 0;
+            PROGRAM_FINISHED = 1;
+            ADD_PROGRAM = 2;
+            FUNCTION_NOT_AVAILABLE = 3;
+            EMPTY = 4; //represents missing resources (e.g. Milk, Beans, Laundry Detergent, etc.)
+        }
+        NotificationType type = 2;
+        string topic = 3;
+        string description = 4;
+    }
+
+    message UserInterfaceParameters{
+        string font = 1;
+        double font_size_multiplier = 2;
+        double contrast = 3;
+        double element_size = 4;
+        bool font_bold = 5;
+        bool font_italic = 6;
+        bool font_underline = 7;
+    }
+    repeated string categories = 3;
+    int64 timestamp = 4;
+}
+
+message Component {
+    /* Required for every component */
+    string parameter_id = 1;
+    repeated google.protobuf.Any default_value = 2;
+    int32 x = 3;
+    int32 y = 4;
+    int32 font_size = 5;
+    map<string, google.protobuf.Any> value_maps = 6;
+
+    /* optional accordingly to component */
+    /* Button */
+    optional string button_title = 7;
+    optional string icon = 8;
+    optional string navigate_to = 9;
+    optional bool executable = 10;
+    optional string program_id = 11;
+    optional bool button = 12;
+
+    /* DropDownMenu */
+    /* optional array not possible in proto3??? */
+    optional string values = 13;
+    optional bool drop_down = 14;
+
+    /* ProgressBar only has x and y paramters */
+    optional bool progress_bar = 15;
+
+    /* Slider */
+    optional string id = 16;
+    optional int32 minimum = 17;
+    optional int32 maximum = 18;
+    optional int32 step = 19;
+    optional bool vertical = 20;
+    optional bool legend = 21;
+    optional string counter_slider = 22;
+    optional int32 width = 23;
+    optional string unit = 24;
+    optional bool slider = 25;
+
+    /* TimeSelector all parameters in component */
+    optional bool time_selector = 26;
+
+}
+
+/* Wizard has to be an own component because it's to complex */
+message Wizard {
+    /* An id in this component would be probably good too.. */
+    string title = 1;
+    message Page {
+        string description = 1;
+        message MenuInterface {
+            repeated google.protobuf.Any options = 1;
+        }
+    }
+    int32 x = 2;
+    int32 y = 3;
+    int32 font_size = 4;
+
+}
+
+
+message Empty {}
+
+message UserInterfaceId {
+    string id = 1;
+}
+
+message ComponentId {
+    string id = 1;
+}
+   
+
+message WizardId {
+    string id = 1;
+}
+
+/* Response Object */
+message UserInterfaceList {
+    repeated UserInterface userInterfaces = 1;
+}
+
+message ComponentList {
+    repeated Component componentList = 1;
+}
+
+message WizardList {
+    repeated Wizard wizardList = 1;
+}
+
+/* Defining RPC service
+   The protocol buffer compiler will generate service interface code and stubs in our chosen language. 
+ */
+service UserInterfaceService {
+    /* requires an empty object as argument and return an array/list of Userinterfaces */
+    rpc GetAllUserInterface (Empty) returns (UserInterfaceList) {}
+    rpc GetAllComponents (Empty) returns (ComponentList){}
+    rpc GetAllWizards (Empty) returns (WizardList){}
+
+    /* requires the UserInterfaceId as argument and returns the UserInterface Object.. */
+    rpc GetUserInterface(UserInterfaceId) returns (UserInterface) {}
+    rpc AddUserInterface (UserInterfaceId) returns (UserInterface) {}
+    rpc EditUserInterface (UserInterface) returns (UserInterface) {}
+    rpc DeleteUserInterface (UserInterfaceId) returns (Empty) {}
+
+    rpc GetComponent(ComponentId) returns (Component){}
+    rpc AddComponent(ComponentId) returns (Component){}
+    rpc EditComponent(ComponentId) returns (Component){}
+    rpc DeleteComponent(ComponentId) returns (Empty){}
+
+    rpc GetWizard(WizardId) returns (Wizard){}
+    rpc AddWizard(WizardId) returns (Wizard){}
+    rpc EditWizard(WizardId) returns (Wizard){}
+    rpc DeleteWizard(WizardId) returns (Empty){}
+}
+
+

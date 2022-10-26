@@ -1,0 +1,10 @@
+version: "3"
+services:
+  node:
+    image: "grpc-server"
+    container_name: "grpc-server"
+    command: "npm start"
+    build: .
+    user: "node"
+    ports:
+      - "80:50051"
