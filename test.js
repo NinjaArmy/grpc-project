@@ -1,14 +1,18 @@
 const client = require("./client");
+const Plugin = require('./plugin/messagePlugin.js');
 
 client.getAllUserInterface({}, (error, userInterfaces) => {
   if (!error) throw error;
   console.log(userInterfaces);
 });
 
+const plugin = new Plugin();
+plugin.log("Plugin reloaded successful!");
+
 /* add userInterface */
 client.addUserInterface(
   {
-    appliance_id: 62, 
+    appliance_id: 62,
     Layout: {
       id: 1,
       ApplianceType: {
@@ -21,7 +25,7 @@ client.addUserInterface(
     View: {
       id: 1,
       ViewType: {
-        STANDBY: 1,  
+        STANDBY: 1,
         IDENTIFICATION: "home",
         HOMESCREEN: "standard",
         ACTIVE_PROGRAM: "coffee",
@@ -40,8 +44,8 @@ client.addUserInterface(
     Notification: {
       id: 1,
       NotificationType: {
-        DOOR_OPEN: 0, 
-        PROGRAM_FINISHED: 1,  
+        DOOR_OPEN: 0,
+        PROGRAM_FINISHED: 1,
         ADD_PROGRAM: "coffee",
         FUNCTION_NOT_AVAILABLE: "Don't know what this is for",
         EMPTY: 0,
@@ -105,10 +109,10 @@ client.addWizard({
   y: 1,
   font_size: 12
 },
-(error, wizards) => {
-  if (error) throw error;
-  console.log("Successfully created a Wizard.");
-}
+  (error, wizards) => {
+    if (error) throw error;
+    console.log("Successfully created a Wizard.");
+  }
 
 );
 

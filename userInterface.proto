@@ -189,3 +189,14 @@ service UserInterfaceService {
 }
 
 
+service MessageService {
+    rpc TestMessage (TestRequest) returns (TestResponse) {}
+}
+
+message TestRequest {
+    string name = 1;
+}
+
+message TestResponse {
+    string message = 1;
+}
