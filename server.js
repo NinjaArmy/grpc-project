@@ -195,6 +195,26 @@ let wizards = [
   }
 ];
 
+// Reloading the plugin
+async function loadPlugin() {
+  try {
+    const pluginModule = await import("./plugin/messagePlugin.js");
+    const plugin = new pluginModule.default();
+    console.log("Plugin successfully reloaded");
+    return plugin;
+  } catch (error) {
+    console.error("Error reloading plugin:", error);
+    throw error;
+  }
+}
+
+
+// Executing the plugin
+async function executePlugin() {
+  const plugin = await loadPlugin();
+  plugin.log("Successfully executed the plugin!");
+}
+
 server.addService(userInterfaceProto.UserInterfaceService.service, {
   /* UserInterface */
   getAllUserInterface: (_, callback) => {
@@ -371,5 +391,6 @@ server.bindAsync(
     console.log("Server at port:", port);
     console.log("Server running at http://127.0.0.1:50051");
     server.start();
+    executePlugin();
   }
 );
