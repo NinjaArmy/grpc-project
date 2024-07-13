@@ -195,24 +195,57 @@ let wizards = [
   }
 ];
 
-// Reloading the plugin
-async function loadPlugin() {
+const Docker = require('dockerode');
+const docker = new Docker();
+
+async function loadPluginFromDockerRegistry() {
+  const imageName = 'joschime/grpc-plugin:tagname';
+
   try {
-    const pluginModule = await import("./plugin/messagePlugin.js");
-    const plugin = new pluginModule.default();
-    console.log("Plugin successfully reloaded");
+    console.log(`Pulling Docker image: ${imageName}`);
+    await new Promise((resolve, reject) => {
+      docker.pull(imageName, (err, stream) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        docker.modem.followProgress(stream, (err, output) => {
+          if (err) {
+            reject(err);
+          } else {
+            console.log(`Successfully pulled Docker image: ${imageName}`);
+            resolve();
+          }
+        });
+      });
+    });
+
+    console.log(`Starting Docker container from image: ${imageName}`);
+    const container = await docker.createContainer({
+      Image: imageName,
+      name: 'plugin-container3',
+    });
+
+    await container.start();
+
+    console.log(`Docker container for plugin started: ${container.id}`);
+
+    const plugin = {
+      log: (message) => {
+        console.log(`Plugin log: ${message}`);
+      }
+    };
+
     return plugin;
   } catch (error) {
-    console.error("Error reloading plugin:", error);
+    console.error('Error loading plugin from Docker registry:', error);
     throw error;
   }
 }
 
-
-// Executing the plugin
 async function executePlugin() {
-  const plugin = await loadPlugin();
-  plugin.log("Successfully executed the plugin!");
+  const plugin = await loadPluginFromDockerRegistry();
+  plugin.log('Successfully executed the plugin!');
 }
 
 server.addService(userInterfaceProto.UserInterfaceService.service, {
