@@ -6,13 +6,13 @@ To run this project you need first to run:
 npm i
 ```
 
-Start the server with:
+Start the server in the server directory with:
 
 ```
 node server
 ```
 
-Start the client with:
+Start the client in the client directory with:
 
 ```
 node client

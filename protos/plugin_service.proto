@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package plugin;
+
+service PluginService {
+    rpc GenerateUI (GenerateUIRequest) returns (GenerateUIResponse);
+    rpc ProcessData (ProcessDataRequest) returns (ProcessDataResponse);
+}
+message PluginRequest {
+    string plugin_name = 1;
+    string source = 2;
+}
+message PluginResponse {
+    repeated UIComponent ui_component = 1;
+}
+
+message GenerateUIRequest {
+    string plugin_name = 1;
+}
+
+message GenerateUIResponse {
+    repeated UIComponent ui_component = 1;
+}
+
+message UIComponent {
+    string type = 1;
+    string label = 2;
+    string action = 3;
+}
+
+message ProcessDataRequest {
+    string input_data = 1;
+}
+
+message ProcessDataResponse {
+    string result = 1;
+}

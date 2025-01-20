@@ -1,0 +1,6 @@
+FROM node:16
+WORKDIR /app
+COPY server/plugins/example_plugin.js /app/
+COPY package*.json /app/
+RUN npm install
+CMD ["node", "/app/example_plugin.js"]
