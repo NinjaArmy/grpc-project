@@ -13,14 +13,16 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const pluginProto = grpc.loadPackageDefinition(packageDefinition).plugin;
 
+// Client verbindet sich mit dem Haupt-gRPC-Server
 const client = new pluginProto.PluginService('localhost:50051', grpc.credentials.createInsecure());
 
-function generateUI(pluginName, source = 'local') {
-    client.GenerateUI({ plugin_name: pluginName, source }, (error, response) => {
+function generateUI(pluginName) {
+    client.GenerateUI({ plugin_name: pluginName }, (error, response) => {
         if (error) {
-            console.error('Error:', error);
+            console.error('Fehler:', error);
             return;
         }
+        console.log("UI-Elemente des Plugins:");
         response.ui_component.forEach(uiElement => {
             renderUI(uiElement);
         });
@@ -36,12 +38,10 @@ function renderUI(uiComponent) {
     } else if (uiComponent.type === 'input') {
         console.log(`[Input]: ${uiComponent.label}`);
         if (uiComponent.action === 'input_submit') {
-            // Simulate user input
             console.log('John Doe'); 
         }
-
     }
 }
 
-// Test the client
-generateUI('example_plugin', 'local');
+// Teste das Plugin von DockerHub
+generateUI('grpc-plugin');

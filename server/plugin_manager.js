@@ -1,34 +1,48 @@
-const { execSync } = require('child_process');
-const path = require('path');
+const Docker = require('dockerode');
+const docker = new Docker();
 
 class PluginManager {
     constructor() {
+        // Zum speichern von Container Ports
         this.plugins = {};
     }
 
-    loadPlugin(pluginName, source = 'local') {
-        if (this.plugins[pluginName]) return this.plugins[pluginName];
-
-        if (source === 'dockerhub') {
-            try {
-                const imageName = `your_dockerhub_username/${pluginName}:latest`;
-                console.log(`Pulling plugin ${imageName}...`);
-                execSync(`docker pull ${imageName}`);
-                console.log(`Plugin ${pluginName} pulled successfully.`);
-            } catch (error) {
-                console.error('Failed to pull plugin:', error);
-                return null;
-            }
+    async loadPlugin(pluginName) {
+        if (this.plugins[pluginName]) {
+            console.log(`Plugin ${pluginName} läuft bereits auf Port ${this.plugins[pluginName]}`);
+            return this.plugins[pluginName];
         }
 
+        // Plugin laden von Dockerhub - TODO: Plugin anpassen
+        const imageName = `joschime/grpc-plugin:tagname`;
+        // Port für das Plugin (aktuell statisch, bei mehrere Plugins dynamisch machen)
+        const port = 50052;
+
         try {
-            const pluginPath = path.join(__dirname, 'plugins', `${pluginName}.js`);
-            const PluginClass = require(pluginPath);
-            const pluginInstance = new PluginClass();
-            this.plugins[pluginName] = pluginInstance;
-            return pluginInstance;
+            console.log(`Pulling Plugin ${imageName} von DockerHub...`);
+            await docker.pull(imageName, (err, stream) => {
+                if (err) console.error("Docker Pull fehlerhaft:", err);
+                docker.modem.followProgress(stream, (onFinished) => {
+                    console.log(`Plugin ${imageName} erfolgreich geladen.`);
+                });
+            });
+
+            console.log(`Starte Plugin ${pluginName} als Docker-Container...`);
+            const container = await docker.createContainer({
+                Image: imageName,
+                name: `plugin_${pluginName}`,
+                ExposedPorts: { "50051/tcp": {} },
+                HostConfig: {
+                    PortBindings: { "50051/tcp": [{ HostPort: `${port}` }] }
+                }
+            });
+
+            await container.start();
+            this.plugins[pluginName] = port;
+            console.log(`Plugin ${pluginName} läuft auf Port ${port}`);
+            return port;
         } catch (error) {
-            console.error('Failed to load plugin:', error);
+            console.error(`Fehler beim Starten des Plugins ${pluginName}:`, error);
             return null;
         }
     }

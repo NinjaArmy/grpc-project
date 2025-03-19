@@ -14,30 +14,47 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const pluginProto = grpc.loadPackageDefinition(packageDefinition).plugin;
 
-// Plugin manager instance
 const pluginManager = new PluginManager();
 
-// Generate UI method
-const generateUI = (call, callback) => {
-    const { plugin_name, source } = call.request;
-    const plugin = pluginManager.loadPlugin(plugin_name, source);
+// Anfragen an das passende Plugin weiterleiten
+const generateUI = async (call, callback) => {
+    const { plugin_name } = call.request;
 
-    if (!plugin) {
+    try {
+        const port = await pluginManager.loadPlugin(plugin_name);
+        if (!port) {
+            return callback({ code: grpc.status.NOT_FOUND, details: "Plugin konnte nicht gestartet werden." });
+        }
+
+        // Verbindung zum Plugin-Container erstellen
+        const pluginClient = new pluginProto.PluginService(
+            `localhost:${port}`,
+            grpc.credentials.createInsecure()
+        );
+
+        // Anfrage weiterleiten
+        pluginClient.GenerateUI(call.request, (error, response) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(null, response);
+        });
+
+    } catch (error) {
         return callback({
-            code: grpc.status.NOT_FOUND,
-            details: "Plugin not found",
+            code: grpc.status.INTERNAL,
+            details: error.message,
         });
     }
-
-    callback(null, { ui_component: plugin.generateUI() });
 };
 
-// Create server
+// gRPC-Server erstellen
 const server = new grpc.Server();
 server.addService(pluginProto.PluginService.service, { GenerateUI: generateUI });
 
 const SERVER_ADDRESS = '0.0.0.0:50051';
 server.bindAsync(SERVER_ADDRESS, grpc.ServerCredentials.createInsecure(), () => {
-    console.log(`Server running at ${SERVER_ADDRESS}`);
-    server.start();
+    console.log(`Server läuft auf ${SERVER_ADDRESS}`);
+    // Depracted - Start Call wird nicht mehr benötigt
+    // server.start();
 });
